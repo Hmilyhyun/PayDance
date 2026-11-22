@@ -68,6 +68,7 @@ export function classifyUpdateError(
 }
 
 export async function checkForUpdate(): Promise<UpdaterStatus> {
+  if (__PAYDANCE_MACOS__) return { kind: "unavailable" };
   try {
     const { check } = await import("@tauri-apps/plugin-updater");
     const update = await check();
@@ -85,6 +86,7 @@ export async function checkForUpdate(): Promise<UpdaterStatus> {
 }
 
 export async function downloadAndInstall(): Promise<UpdaterStatus> {
+  if (__PAYDANCE_MACOS__) return { kind: "unavailable" };
   try {
     const { invoke } = await import("@tauri-apps/api/core");
     return await invoke<PortableUpdateResult>("install_portable_update");
