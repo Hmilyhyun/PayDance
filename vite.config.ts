@@ -22,6 +22,7 @@ const projectRoot = fileURLToPath(new URL(".", import.meta.url));
 
 export default defineConfig(({ mode }) => {
   const isWeb = mode === "web";
+  const isMacDesktop = !isWeb && process.env.TAURI_ENV_PLATFORM === "darwin";
   const dateModified = resolveBuildDate();
   const webBase =
     process.env.PAYDANCE_WEB_BASE ?? (process.env.VERCEL ? "/" : "/PayDance/");
@@ -31,11 +32,22 @@ export default defineConfig(({ mode }) => {
 
   return {
     base: isWeb ? webBase : "./",
+    publicDir: isMacDesktop ? false : undefined,
     define: {
+      __PAYDANCE_MACOS__: isMacDesktop,
       __PAYDANCE_VERSION__: JSON.stringify(packageMetadata.version),
       __PAYDANCE_WINDOWS_DOWNLOAD_URL__: JSON.stringify(windowsDownloadUrl),
     },
     plugins: [
+      {
+        name: "macos-app-html",
+        transformIndexHtml(html) {
+          if (!isMacDesktop) return;
+          return html
+            .replace(/^.*%BASE_URL%favicon\.png.*\r?\n/gm, "")
+            .replace(/<title>.*<\/title>/, "<title>Salary Clock for Mac</title>");
+        },
+      },
       createWebSeoPlugin({
         dateModified,
         emitSitemap: isWeb,
