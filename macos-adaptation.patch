@@ -1,0 +1,120 @@
+diff --git a/src/lib/app-meta.ts b/src/lib/app-meta.ts
+index 5f0478a..efba947 100644
+--- a/src/lib/app-meta.ts
++++ b/src/lib/app-meta.ts
+@@ -3,12 +3,14 @@
+ //
+ // Additional terms: see /legal/ADDITIONAL_TERMS.md
+ 
+-export const appName = "薪跳";
+-export const appEnglishName = "PayDance";
++export const appName = __PAYDANCE_MACOS__ ? "工资时钟" : "薪跳";
++export const appEnglishName = __PAYDANCE_MACOS__ ? "Salary Clock for Mac" : "PayDance";
+ export const appTagline = "桌面实时工资看板";
+ export const appVersion = __PAYDANCE_VERSION__;
+ export const appAuthor = "Mr.Baoboer";
+-export const appCopyright = "© 2026 Mr.Baoboer";
++export const appCopyright = __PAYDANCE_MACOS__
++  ? "Based on PayDance © 2026 Mr.Baoboer · AGPL-3.0-only"
++  : "© 2026 Mr.Baoboer";
+ export const repositoryUrl = "https://github.com/MrBaoboer/PayDance";
+ // Set by vite.config.ts: on Vercel it is the /download/windows endpoint (api/download-windows.js),
+ // which redirects to the newest versioned EXE; other builds link to the Release page.
+diff --git a/src/platform/updater.ts b/src/platform/updater.ts
+index a140c64..09b1b09 100644
+--- a/src/platform/updater.ts
++++ b/src/platform/updater.ts
+@@ -68,6 +68,7 @@ export function classifyUpdateError(
+ }
+ 
+ export async function checkForUpdate(): Promise<UpdaterStatus> {
++  if (__PAYDANCE_MACOS__) return { kind: "unavailable" };
+   try {
+     const { check } = await import("@tauri-apps/plugin-updater");
+     const update = await check();
+@@ -85,6 +86,7 @@ export async function checkForUpdate(): Promise<UpdaterStatus> {
+ }
+ 
+ export async function downloadAndInstall(): Promise<UpdaterStatus> {
++  if (__PAYDANCE_MACOS__) return { kind: "unavailable" };
+   try {
+     const { invoke } = await import("@tauri-apps/api/core");
+     return await invoke<PortableUpdateResult>("install_portable_update");
+diff --git a/src/vite-env.d.ts b/src/vite-env.d.ts
+index d6b0c19..9235df1 100644
+--- a/src/vite-env.d.ts
++++ b/src/vite-env.d.ts
+@@ -6,4 +6,5 @@
+ /// <reference types="vite/client" />
+ 
+ declare const __PAYDANCE_VERSION__: string;
++declare const __PAYDANCE_MACOS__: boolean;
+ declare const __PAYDANCE_WINDOWS_DOWNLOAD_URL__: string;
+diff --git a/vite.config.ts b/vite.config.ts
+index 4bbc214..061a9fe 100644
+--- a/vite.config.ts
++++ b/vite.config.ts
+@@ -22,6 +22,7 @@ const projectRoot = fileURLToPath(new URL(".", import.meta.url));
+ 
+ export default defineConfig(({ mode }) => {
+   const isWeb = mode === "web";
++  const isMacDesktop = !isWeb && process.env.TAURI_ENV_PLATFORM === "darwin";
+   const dateModified = resolveBuildDate();
+   const webBase =
+     process.env.PAYDANCE_WEB_BASE ?? (process.env.VERCEL ? "/" : "/PayDance/");
+@@ -31,11 +32,22 @@ export default defineConfig(({ mode }) => {
+ 
+   return {
+     base: isWeb ? webBase : "./",
++    publicDir: isMacDesktop ? false : undefined,
+     define: {
++      __PAYDANCE_MACOS__: isMacDesktop,
+       __PAYDANCE_VERSION__: JSON.stringify(packageMetadata.version),
+       __PAYDANCE_WINDOWS_DOWNLOAD_URL__: JSON.stringify(windowsDownloadUrl),
+     },
+     plugins: [
++      {
++        name: "macos-app-html",
++        transformIndexHtml(html) {
++          if (!isMacDesktop) return;
++          return html
++            .replace(/^.*%BASE_URL%favicon\.png.*\r?\n/gm, "")
++            .replace(/<title>.*<\/title>/, "<title>Salary Clock for Mac</title>");
++        },
++      },
+       createWebSeoPlugin({
+         dateModified,
+         emitSitemap: isWeb,
+diff --git a/src-tauri/icons/salary-clock.svg b/src-tauri/icons/salary-clock.svg
+new file mode 100644
+index 0000000..3527e78
+--- /dev/null
++++ b/src-tauri/icons/salary-clock.svg
+@@ -0,0 +1,5 @@
++<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">
++  <rect x="40" y="40" width="432" height="432" rx="96" fill="#16304a"/>
++  <circle cx="256" cy="256" r="137" fill="none" stroke="#8af0cc" stroke-width="22"/>
++  <path d="M256 168v96l61 36" fill="none" stroke="#fff" stroke-width="24" stroke-linecap="round" stroke-linejoin="round"/>
++</svg>
+diff --git a/src-tauri/tauri.macos.conf.json b/src-tauri/tauri.macos.conf.json
+new file mode 100644
+index 0000000..87b1591
+--- /dev/null
++++ b/src-tauri/tauri.macos.conf.json
+@@ -0,0 +1,16 @@
++{
++  "productName": "Salary Clock for Mac",
++  "identifier": "com.hmilyhyun.salaryclock",
++  "build": {
++    "beforeBuildCommand": "npm run tauri -- icon src-tauri/icons/salary-clock.svg --output src-tauri/target/macos-icons && npm run build:desktop"
++  },
++  "bundle": {
++    "targets": ["dmg"],
++    "createUpdaterArtifacts": false,
++    "icon": ["target/macos-icons/32x32.png", "target/macos-icons/icon.icns"],
++    "publisher": "Hmilyhyun",
++    "macOS": {
++      "minimumSystemVersion": "12.0"
++    }
++  }
++}
