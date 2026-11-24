@@ -28,6 +28,24 @@ describe("useSalarySettings", () => {
     storeMocks.save.mockReset();
   });
 
+  it("stores the macOS mini pin separately from the old main-window preference", async () => {
+    storeMocks.get.mockImplementation(async (key: string) =>
+      key === "alwaysOnTop" ? false : undefined,
+    );
+    const { useSalarySettings } = await import("./useSalarySettings");
+    const macSettings = useSalarySettings(createMockStore, undefined, {
+      macosMiniWindow: true,
+    });
+
+    const windowPreferences = await macSettings.loadSettings();
+    expect(macSettings.alwaysOnTop.value).toBe(true);
+    macSettings.alwaysOnTop.value = false;
+    await macSettings.saveSettings(windowPreferences);
+
+    expect(storeMocks.set).toHaveBeenCalledWith("miniAlwaysOnTop", false);
+    expect(storeMocks.set).not.toHaveBeenCalledWith("alwaysOnTop", expect.anything());
+  });
+
   it("falls back to in-memory defaults without touching a store it cannot read", async () => {
     storeMocks.get.mockRejectedValue(new Error("corrupt settings"));
 

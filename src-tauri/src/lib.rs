@@ -5,6 +5,8 @@
 
 use tauri::Manager;
 
+#[cfg(target_os = "macos")]
+mod macos_window;
 mod portable_update;
 mod settings_backup;
 mod tray;
@@ -30,19 +32,42 @@ pub fn run() {
         }
     }));
 
+    #[cfg(target_os = "macos")]
+    let builder = builder.on_window_event(|window, event| {
+        if window.label() == "main"
+            && let tauri::WindowEvent::CloseRequested { api, .. } = event
+        {
+            api.prevent_close();
+            let _ = window.hide();
+        }
+    });
+
     builder
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_store::Builder::new().build())
         .plugin(tauri_plugin_updater::Builder::new().build())
         .invoke_handler(tauri::generate_handler![
             install_portable_update,
-            backup_unreadable_settings
+            backup_unreadable_settings,
+            #[cfg(target_os = "macos")]
+            macos_window::set_macos_mini_window,
         ])
         .on_window_event(exit_when_main_window_destroyed)
         .setup(|app| {
             tray::setup(app)?;
             Ok(())
         })
-        .run(tauri::generate_context!())
-        .expect("error while running tauri application");
+        .build(tauri::generate_context!())
+        .expect("error while building tauri application")
+        .run(|_app, _event| {
+            #[cfg(target_os = "macos")]
+            if let tauri::RunEvent::Reopen {
+                has_visible_windows: false,
+                ..
+            } = _event
+                && let Some(window) = _app.get_webview_window("main")
+            {
+                show_window(&window);
+            }
+        });
 }

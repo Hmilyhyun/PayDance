@@ -1,0 +1,13 @@
+{
+  "identifier": "macos-window",
+  "platforms": ["macOS"],
+  "windows": ["main"],
+  "permissions": [
+    "autostart:allow-disable",
+    "autostart:allow-enable",
+    "autostart:allow-is-enabled",
+    "core:app:allow-set-dock-visibility",
+    "core:window:allow-set-decorations",
+    "core:window:allow-set-maximizable"
+  ]
+}

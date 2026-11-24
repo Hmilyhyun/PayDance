@@ -54,6 +54,7 @@ const en: Messages = {
   "settings.currency": "Currency symbol",
   "settings.startup": "Startup",
   "settings.autostart": "Launch at startup",
+  "settings.miniAlwaysOnTop": "Keep mini window on top",
   "settings.language": "Language",
   "settings.onboarding": "First-time setup",
   "settings.openOnboarding": "Open first-time setup",

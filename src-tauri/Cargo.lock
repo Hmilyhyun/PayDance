@@ -2523,6 +2523,8 @@ dependencies = [
 name = "pay-dance"
 version = "0.9.10"
 dependencies = [
+ "objc2",
+ "objc2-app-kit",
  "serde",
  "serde_json",
  "tauri",

@@ -14,7 +14,7 @@ import {
   type WindowPosition,
   type WindowSize,
 } from "./lib/window-mode";
-import { appName } from "./lib/app-meta";
+import { appName, isMacDesktop } from "./lib/app-meta";
 import { localeChangedEventName } from "./lib/app-events";
 import type { ResizeDirection } from "./lib/resize-handles";
 import { useAppShell } from "./composables/useAppShell";
@@ -51,7 +51,7 @@ const {
   saveSettings,
   settingsSaveError,
   themeMode,
-} = useSalarySettings(undefined, () => t.value);
+} = useSalarySettings(undefined, () => t.value, { macosMiniWindow: isMacDesktop });
 
 const { t } = provideI18n(locale);
 
@@ -87,6 +87,7 @@ const { applyWindowMode, reapplyTaskbarVisibility, setAlwaysOnTop } = useWindowM
   miniSize,
   fullSize,
   alwaysOnTop,
+  isMacDesktop,
 );
 const windowPosition = useWindowPositionRecovery({
   appWindow,
@@ -212,9 +213,8 @@ const unlisteners: Array<() => void> = [];
 onMounted(async () => {
   if (isOpacityPanelWindow) return;
 
-  // Registered before any await: until the close interceptor inside exists, a close request
-  // (Alt+F4, the taskbar context menu) destroys the window instead of hiding it, and a
-  // destroyed main window used to leave a live process behind a tray that no longer responds.
+  // On Windows, register the close interceptor before loading preferences so that Alt+F4
+  // and the taskbar close action hide the window during startup as well.
   unlisteners.push(...(await registerWindowLifecycle()));
 
   const windowPreferences = await loadWindowPreferences();
@@ -280,6 +280,7 @@ onBeforeUnmount(() => {
     :class="[
       shellClass,
       activeView === 'mini' ? 'is-mini' : '',
+      { 'app-shell--macos': isMacDesktop },
       { 'is-theme-syncing': isThemeSwitching },
     ]"
     @contextmenu.prevent
@@ -318,6 +319,7 @@ onBeforeUnmount(() => {
       :settings-save-error="settingsSaveError"
       :should-show-onboarding="shouldShowOnboarding"
       :show-desktop-features="true"
+      :use-native-window-controls="isMacDesktop"
       :snapshot="snapshot"
       :status-text="statusText"
       :theme-mode="themeMode"

@@ -5,6 +5,7 @@
 
 import type { Ref } from "vue";
 import { windowShownEventName } from "../lib/app-events";
+import { isMacDesktop } from "../lib/app-meta";
 import {
   normalizeFullSize,
   normalizeMiniOpacityPercent,
@@ -79,12 +80,14 @@ export function useAppWindowLifecycle(
   const registerWindowLifecycle = async () => {
     const unlisteners: UnlistenFn[] = [];
 
-    unlisteners.push(
-      await appWindow.onCloseRequested(async (event) => {
-        event.preventDefault();
-        await appWindow.hide();
-      }),
-    );
+    if (!isMacDesktop) {
+      unlisteners.push(
+        await appWindow.onCloseRequested(async (event) => {
+          event.preventDefault();
+          await appWindow.hide();
+        }),
+      );
+    }
 
     unlisteners.push(
       await appWindow.listen<{ value?: number; commit?: boolean }>(

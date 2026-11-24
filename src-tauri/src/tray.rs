@@ -53,7 +53,11 @@ fn tray_menu_labels(use_en: bool) -> TrayMenuLabels {
             show: "Open",
             settings: "Settings",
             toggle_mini: "Mini Mode",
-            toggle_top: "Always on Top",
+            toggle_top: if cfg!(target_os = "macos") {
+                "Toggle Mini Window Always on Top"
+            } else {
+                "Always on Top"
+            },
             quit: "Quit",
         }
     } else {
@@ -61,7 +65,11 @@ fn tray_menu_labels(use_en: bool) -> TrayMenuLabels {
             show: "打开主界面",
             settings: "打开设置",
             toggle_mini: "切换迷你模式",
-            toggle_top: "切换置顶",
+            toggle_top: if cfg!(target_os = "macos") {
+                "切换迷你窗置顶"
+            } else {
+                "切换置顶"
+            },
             quit: "退出",
         }
     }
@@ -131,6 +139,7 @@ fn dispatch_tray_action(window: &WebviewWindow, action: TrayAction) {
             let _ = window.emit(TRAY_TOGGLE_MINI_MODE_EVENT, ());
         }
         TrayAction::ToggleAlwaysOnTop => {
+            #[cfg(not(target_os = "macos"))]
             show_window(window);
             let _ = window.emit(TRAY_TOGGLE_ALWAYS_ON_TOP_EVENT, ());
         }

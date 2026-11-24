@@ -13,6 +13,7 @@ import {
 } from "../composables/useI18n";
 import type { UpdaterStatus } from "#updater";
 import type { Messages } from "../i18n/types";
+import { isMacDesktop } from "../lib/app-meta";
 import CurrencySymbolField from "./settings/CurrencySymbolField.vue";
 import LunchBreakFields from "./settings/LunchBreakFields.vue";
 import SalaryAmountFields from "./settings/SalaryAmountFields.vue";
@@ -37,6 +38,7 @@ const props = withDefaults(
     firstIssue: string;
     hasIssue: (field: SalaryConfigIssue["field"]) => boolean;
     isAutostartUpdating: boolean;
+    miniAlwaysOnTop?: boolean;
     settingsSaveError?: string;
     showDesktopFeatures?: boolean;
     showOnboardingAction?: boolean;
@@ -51,6 +53,7 @@ const props = withDefaults(
 
 const emit = defineEmits<{
   openOnboarding: [];
+  toggleMiniAlwaysOnTop: [];
   "update:autostartEnabled": [enabled: boolean];
   "update:amountMode": [mode: "rolling" | "plain"];
   "update:config": [config: SalaryConfig];
@@ -194,6 +197,17 @@ const updateConfig = <Key extends keyof SalaryConfig>(
     <SettingsGroup v-if="showOnboardingAction" :title="t('settings.onboarding')">
       <template #action>
         <SettingsOnboardingAction @open="emit('openOnboarding')" />
+      </template>
+    </SettingsGroup>
+
+    <SettingsGroup v-if="isMacDesktop" :title="t('settings.miniAlwaysOnTop')">
+      <template #action>
+        <SwitchRow
+          :label="t('settings.miniAlwaysOnTop')"
+          title-action
+          :model-value="miniAlwaysOnTop ?? true"
+          @update:model-value="emit('toggleMiniAlwaysOnTop')"
+        />
       </template>
     </SettingsGroup>
 

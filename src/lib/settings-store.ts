@@ -14,6 +14,7 @@ export const settingsStoreKeys = {
   hasCompletedOnboarding: "hasCompletedOnboarding",
   isMiniMode: "isMiniMode",
   mainPosition: "mainPosition",
+  miniAlwaysOnTop: "miniAlwaysOnTop",
   miniOpacityPercent: "miniOpacityPercent",
   miniPosition: "miniPosition",
   miniSize: "miniSize",

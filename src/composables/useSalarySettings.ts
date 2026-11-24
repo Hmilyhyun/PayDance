@@ -50,7 +50,7 @@ const fallbackT: TFunc = (key) => key;
 export function useSalarySettings(
   storeLoader = () => createSettingsStore(settingsStoreFileName),
   getT: () => TFunc = () => fallbackT,
-  options: { retryDelayMs?: number } = {},
+  options: { retryDelayMs?: number; macosMiniWindow?: boolean } = {},
 ) {
   const config = ref<SalaryConfig>({ ...defaultSalaryConfig });
   const currencySymbol = ref(defaultCurrencySymbol);
@@ -62,6 +62,9 @@ export function useSalarySettings(
   const isSettingsReady = ref(false);
   const settingsSaveError = ref("");
   const retryDelayMs = options.retryDelayMs ?? 250;
+  const alwaysOnTopKey = options.macosMiniWindow
+    ? settingsStoreKeys.miniAlwaysOnTop
+    : settingsStoreKeys.alwaysOnTop;
   let storePromise: Promise<SettingsStoreAdapter> | null = null;
 
   const getStore = () => {
@@ -139,7 +142,7 @@ export function useSalarySettings(
       const windowPreferences = resolveWindowPreferences({});
       await store.set(settingsStoreKeys.config, config.value);
       await store.set(settingsStoreKeys.currencySymbol, currencySymbol.value);
-      await store.set(settingsStoreKeys.alwaysOnTop, alwaysOnTop.value);
+      await store.set(alwaysOnTopKey, alwaysOnTop.value);
       await store.set(settingsStoreKeys.themeMode, themeMode.value);
       await store.set(settingsStoreKeys.amountMode, amountMode.value);
       await store.set(settingsStoreKeys.locale, locale.value);
@@ -182,7 +185,7 @@ export function useSalarySettings(
     const store = await getStore();
     const savedConfig = await store.get<Partial<SalaryConfig>>(settingsStoreKeys.config);
     const savedCurrencySymbol = await store.get<string>(settingsStoreKeys.currencySymbol);
-    const savedTop = await store.get<boolean>(settingsStoreKeys.alwaysOnTop);
+    const savedTop = await store.get<boolean>(alwaysOnTopKey);
     const savedTheme = await store.get<ThemeMode>(settingsStoreKeys.themeMode);
     const savedAmountMode = await store.get<AmountMode>(settingsStoreKeys.amountMode);
     const savedIsMiniMode = await store.get<boolean>(settingsStoreKeys.isMiniMode);
@@ -319,7 +322,7 @@ export function useSalarySettings(
         settingsStoreKeys.currencySymbol,
         normalizeCurrencySymbol(currencySymbol.value),
       );
-      await store.set(settingsStoreKeys.alwaysOnTop, alwaysOnTop.value);
+      await store.set(alwaysOnTopKey, alwaysOnTop.value);
       await store.set(settingsStoreKeys.fullSize, fullSize);
       await store.set(settingsStoreKeys.isMiniMode, isMiniMode);
       await store.set(settingsStoreKeys.themeMode, themeMode.value);

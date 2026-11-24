@@ -52,6 +52,8 @@ Used only for builds, tests, and verification; not shipped as standalone package
 
 | Crate | License |
 |-------|---------|
+| `objc2` | MIT |
+| `objc2-app-kit` | Zlib OR Apache-2.0 OR MIT |
 | `serde` | Apache-2.0 OR MIT |
 | `serde_json` | Apache-2.0 OR MIT |
 | `tauri` | Apache-2.0 OR MIT |

@@ -10,7 +10,12 @@ import type { SalaryStatus } from "../lib/salary";
 import WindowTitlebar from "./WindowTitlebar.vue";
 
 const mountTitlebar = (
-  props: { hasConfigIssues?: boolean; isNightWork?: boolean; status?: SalaryStatus } = {},
+  props: {
+    hasConfigIssues?: boolean;
+    isNightWork?: boolean;
+    status?: SalaryStatus;
+    useNativeWindowControls?: boolean;
+  } = {},
 ) =>
   mount(WindowTitlebar, {
     props: {
@@ -27,6 +32,22 @@ const dotClass = (wrapper: ReturnType<typeof mountTitlebar>) =>
     .get(".status-dot")
     .classes()
     .find((className) => className.startsWith("status-dot--"));
+
+it("uses native close and minimize and hides the main-window pin on macOS", async () => {
+  const titlebar = mountTitlebar();
+  const buttons = () => titlebar.findAll(".window-actions button");
+
+  expect(buttons()).toHaveLength(6);
+  await buttons()[3]!.trigger("click");
+  await buttons()[4]!.trigger("click");
+  await buttons()[5]!.trigger("click");
+  expect(titlebar.emitted("minimize")).toHaveLength(1);
+  expect(titlebar.emitted("close")).toHaveLength(1);
+
+  await titlebar.setProps({ useNativeWindowControls: true });
+  expect(buttons()).toHaveLength(3);
+  expect(titlebar.emitted("toggleAlwaysOnTop")).toHaveLength(1);
+});
 
 describe("WindowTitlebar status dot", () => {
   it.each([

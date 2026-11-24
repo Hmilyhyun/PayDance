@@ -4,6 +4,40 @@
   "build": {
     "beforeBuildCommand": "npm run tauri -- icon src-tauri/icons/salary-clock.svg --output src-tauri/target/macos-icons && npm run build:desktop"
   },
+  "app": {
+    "windows": [
+      {
+        "label": "main",
+        "title": "Salary Clock for Mac",
+        "width": 480,
+        "height": 460,
+        "minWidth": 430,
+        "minHeight": 410,
+        "center": true,
+        "decorations": true,
+        "transparent": true,
+        "shadow": false,
+        "resizable": true,
+        "maximizable": false,
+        "theme": "Light",
+        "alwaysOnTop": false
+      },
+      {
+        "label": "mini-opacity",
+        "title": "透明度",
+        "width": 108,
+        "height": 52,
+        "decorations": false,
+        "transparent": true,
+        "shadow": false,
+        "resizable": false,
+        "visible": false,
+        "skipTaskbar": true,
+        "alwaysOnTop": true,
+        "theme": "Light"
+      }
+    ]
+  },
   "bundle": {
     "targets": ["dmg"],
     "createUpdaterArtifacts": false,

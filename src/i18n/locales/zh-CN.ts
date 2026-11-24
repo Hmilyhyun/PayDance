@@ -53,6 +53,7 @@ const zhCN: Messages = {
   "settings.currency": "货币符号",
   "settings.startup": "启动",
   "settings.autostart": "开机自动启动",
+  "settings.miniAlwaysOnTop": "迷你窗置顶",
   "settings.language": "语言",
   "settings.onboarding": "首次启动向导",
   "settings.openOnboarding": "打开首次启动向导",

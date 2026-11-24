@@ -36,6 +36,10 @@
   display: none;
 }
 
+.app-shell--macos {
+  border-radius: 0;
+}
+
 .app-window {
   position: relative;
   display: flex;

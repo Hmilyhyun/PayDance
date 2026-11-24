@@ -11,6 +11,12 @@ const tauriDir = resolve(import.meta.dirname);
 const tauriConfig = JSON.parse(
   readFileSync(resolve(tauriDir, "tauri.conf.json"), "utf8"),
 );
+const macosConfig = JSON.parse(
+  readFileSync(resolve(tauriDir, "tauri.macos.conf.json"), "utf8"),
+);
+const macosWindowCapability = JSON.parse(
+  readFileSync(resolve(tauriDir, "capabilities", "macos-window.json"), "utf8"),
+);
 const defaultCapability = JSON.parse(
   readFileSync(resolve(tauriDir, "capabilities", "default.json"), "utf8"),
 );
@@ -42,6 +48,38 @@ describe("desktop window chrome", () => {
     expect(mainWindow.transparent).toBe(true);
     expect(mainWindow.shadow).toBe(false);
     expect(mainWindow.windowEffects).toBeUndefined();
+  });
+
+  it("enables native main-window controls only on macOS", () => {
+    const [mainWindow, opacityWindow] = tauriConfig.app.windows;
+    const [macosMainWindow, macosOpacityWindow] = macosConfig.app.windows;
+
+    expect(mainWindow.decorations).toBe(false);
+    expect(macosMainWindow).toMatchObject({ label: "main", decorations: true });
+    expect(macosOpacityWindow).toEqual(opacityWindow);
+    expect(macosWindowCapability.platforms).toEqual(["macOS"]);
+    expect(macosWindowCapability.windows).toEqual(["main"]);
+    expect(macosWindowCapability.permissions).toEqual(
+      expect.arrayContaining([
+        "core:app:allow-set-dock-visibility",
+        "core:window:allow-set-decorations",
+        "core:window:allow-set-maximizable",
+      ]),
+    );
+  });
+
+  it("allows the macOS main window to manage launch at login", () => {
+    expect(macosWindowCapability.platforms).toEqual(["macOS"]);
+    expect(macosWindowCapability.windows).toEqual(["main"]);
+    expect(
+      macosWindowCapability.permissions.filter((permission) =>
+        permission.startsWith("autostart:"),
+      ),
+    ).toEqual([
+      "autostart:allow-disable",
+      "autostart:allow-enable",
+      "autostart:allow-is-enabled",
+    ]);
   });
 
   it("uses left tray click to show the main window and right click for the menu", () => {

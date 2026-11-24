@@ -47,6 +47,7 @@ withDefaults(
     statusText: string;
     themeMode: ThemeMode;
     updateStatus: UpdaterStatus;
+    useNativeWindowControls?: boolean;
     workedTimeText: string;
   }>(),
   {
@@ -90,6 +91,7 @@ const emit = defineEmits<{
       :status="snapshot.status"
       :status-text="statusText"
       :theme-mode="themeMode"
+      :use-native-window-controls="useNativeWindowControls"
       @close="emit('close')"
       @drag-start="emit('dragStart', $event)"
       @minimize="emit('minimize')"
@@ -149,11 +151,13 @@ const emit = defineEmits<{
               :first-issue="firstConfigIssue"
               :has-issue="hasIssue"
               :is-autostart-updating="isAutostartUpdating"
+              :mini-always-on-top="alwaysOnTop"
               :settings-save-error="settingsSaveError"
               :show-desktop-features="showDesktopFeatures"
               :show-onboarding-action="showOnboardingAction"
               :update-status="updateStatus"
               @open-onboarding="emit('openOnboarding')"
+              @toggle-mini-always-on-top="emit('toggleAlwaysOnTop')"
               @update:amount-mode="emit('update:amountMode', $event)"
               @update:autostart-enabled="emit('update:autostartEnabled', $event)"
               @update:config="emit('update:config', $event)"

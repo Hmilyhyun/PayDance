@@ -19,6 +19,7 @@ const props = withDefaults(
     status?: SalaryStatus;
     statusText: string;
     themeMode: "light" | "dark";
+    useNativeWindowControls?: boolean;
   }>(),
   {
     isNightWork: false,
@@ -92,7 +93,7 @@ defineEmits<{
         <Moon v-else :size="16" />
       </button>
       <button
-        v-if="showDesktopActions"
+        v-if="showDesktopActions && !useNativeWindowControls"
         class="icon-button"
         :aria-label="alwaysOnTop ? t('titlebar.cancelTop') : t('titlebar.alwaysOnTop')"
         :title="
@@ -104,7 +105,7 @@ defineEmits<{
         <Pin :class="{ 'pin-icon--filled': alwaysOnTop }" :size="16" />
       </button>
       <button
-        v-if="showDesktopActions"
+        v-if="showDesktopActions && !useNativeWindowControls"
         class="icon-button"
         :aria-label="t('titlebar.minimize')"
         :title="t('titlebar.minimizeTitle')"
@@ -114,7 +115,7 @@ defineEmits<{
         <Minus :size="16" />
       </button>
       <button
-        v-if="showDesktopActions"
+        v-if="showDesktopActions && !useNativeWindowControls"
         class="icon-button danger"
         :aria-label="t('titlebar.closeToTray')"
         :title="t('titlebar.closeToTray')"

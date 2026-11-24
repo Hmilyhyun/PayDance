@@ -58,6 +58,7 @@ export interface Messages {
   "settings.currency": string;
   "settings.startup": string;
   "settings.autostart": string;
+  "settings.miniAlwaysOnTop": string;
   "settings.language": string;
   "settings.onboarding": string;
   "settings.openOnboarding": string;

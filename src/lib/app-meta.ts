@@ -3,6 +3,7 @@
 //
 // Additional terms: see /legal/ADDITIONAL_TERMS.md
 
+export const isMacDesktop = __PAYDANCE_MACOS__;
 export const appName = __PAYDANCE_MACOS__ ? "工资时钟" : "薪跳";
 export const appEnglishName = __PAYDANCE_MACOS__ ? "Salary Clock for Mac" : "PayDance";
 export const appTagline = "桌面实时工资看板";
