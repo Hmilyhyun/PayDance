@@ -3,6 +3,7 @@
 //
 // Additional terms: see /legal/ADDITIONAL_TERMS.md
 
+import type { Window } from "@tauri-apps/api/window";
 import type { Ref } from "vue";
 import { windowShownEventName } from "../lib/app-events";
 import { isMacDesktop } from "../lib/app-meta";
@@ -12,8 +13,42 @@ import {
   normalizeMiniSize,
   type WindowSize,
 } from "../lib/window-mode";
+import { registerTrayActions, type TrayActions } from "./useTrayActions";
 
 type UnlistenFn = () => void;
+
+export async function registerReadyWindowActions(
+  appWindow: Pick<Window, "listen" | "onFocusChanged" | "onMoved">,
+  actions: TrayActions & {
+    recordWindowPosition: (position: { x: number; y: number }) => boolean;
+    refreshAutostart: () => Promise<void>;
+    saveStateNow: () => Promise<void>;
+    scheduleSaveState: () => void;
+  },
+) {
+  const unlisteners = [
+    await appWindow.listen("before-app-exit", async () => {
+      try {
+        await actions.saveStateNow();
+      } finally {
+        const { exit } = await import("@tauri-apps/plugin-process");
+        await exit(0);
+      }
+    }),
+    await appWindow.onMoved(({ payload: position }) => {
+      if (actions.recordWindowPosition(position)) actions.scheduleSaveState();
+    }),
+    ...(await registerTrayActions(appWindow, actions)),
+  ];
+  if (isMacDesktop) {
+    unlisteners.push(
+      await appWindow.onFocusChanged(({ payload: focused }) => {
+        if (focused) void actions.refreshAutostart();
+      }),
+    );
+  }
+  return unlisteners;
+}
 
 type LifecycleWindow = {
   hide: () => Promise<void>;

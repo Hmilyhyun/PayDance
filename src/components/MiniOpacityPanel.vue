@@ -7,6 +7,7 @@ import { computed, onBeforeUnmount, onMounted, ref } from "vue";
 import { emitTo } from "@tauri-apps/api/event";
 import { getCurrentWindow } from "@tauri-apps/api/window";
 import { detectLocale, useI18n } from "../composables/useI18n";
+import { isMacDesktop } from "../lib/app-meta";
 import {
   defaultMiniOpacityPercent,
   maxMiniOpacityPercent,
@@ -61,6 +62,7 @@ const handleKeydown = (event: KeyboardEvent) => {
 };
 
 let unlistenPanelOpen: (() => void) | undefined;
+let unlistenPanelTheme: (() => void) | undefined;
 
 onMounted(async () => {
   unlistenPanelOpen = await appWindow.listen<MiniOpacityPanelPayload>(
@@ -76,12 +78,21 @@ onMounted(async () => {
       locale.value = detectLocale(event.payload.locale);
     },
   );
+  if (isMacDesktop) {
+    unlistenPanelTheme = await appWindow.listen<ThemeMode>(
+      "mini-opacity-theme-change",
+      ({ payload }) => {
+        themeMode.value = payload;
+      },
+    );
+  }
   window.addEventListener("blur", hidePanel);
   window.addEventListener("keydown", handleKeydown);
 });
 
 onBeforeUnmount(() => {
   unlistenPanelOpen?.();
+  unlistenPanelTheme?.();
   window.removeEventListener("blur", hidePanel);
   window.removeEventListener("keydown", handleKeydown);
 });

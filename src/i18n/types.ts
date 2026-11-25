@@ -59,6 +59,7 @@ export interface Messages {
   "settings.startup": string;
   "settings.autostart": string;
   "settings.miniAlwaysOnTop": string;
+  "settings.followSystemTheme": string;
   "settings.language": string;
   "settings.onboarding": string;
   "settings.openOnboarding": string;
@@ -181,6 +182,7 @@ export interface Messages {
 
   // ── Autostart ──────────────────────────────────────────────────────────
   "autostart.error": string;
+  "autostart.macosError": string;
 
   // ── Updater ────────────────────────────────────────────────────────────
   "updater.newVersion": string;

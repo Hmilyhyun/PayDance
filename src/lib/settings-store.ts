@@ -11,6 +11,7 @@ export const settingsStoreKeys = {
   config: "config",
   currencySymbol: "currencySymbol",
   fullSize: "fullSize",
+  followsSystemTheme: "followsSystemTheme",
   hasCompletedOnboarding: "hasCompletedOnboarding",
   isMiniMode: "isMiniMode",
   mainPosition: "mainPosition",

@@ -8,6 +8,7 @@
     "autostart:allow-is-enabled",
     "core:app:allow-set-dock-visibility",
     "core:window:allow-set-decorations",
-    "core:window:allow-set-maximizable"
+    "core:window:allow-set-maximizable",
+    "process:allow-exit"
   ]
 }

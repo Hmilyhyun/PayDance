@@ -14,15 +14,27 @@ type TrayEventWindow = {
   ) => Promise<UnlistenFn>;
 };
 
+export type TrayActions = {
+  openMain?: () => Promise<void> | void;
+  openSettings: () => Promise<void> | void;
+  toggleAlwaysOnTop: () => Promise<void> | void;
+  toggleMiniMode: () => Promise<void> | void;
+};
+
 export async function registerTrayActions(
   appWindow: TrayEventWindow,
-  actions: {
-    openSettings: () => Promise<void> | void;
-    toggleAlwaysOnTop: () => Promise<void> | void;
-    toggleMiniMode: () => Promise<void> | void;
-  },
+  actions: TrayActions,
 ) {
   const unlisteners: UnlistenFn[] = [];
+
+  const { openMain } = actions;
+  if (openMain) {
+    unlisteners.push(
+      await appWindow.listen(trayEventNames.openMain, () => {
+        void openMain();
+      }),
+    );
+  }
 
   unlisteners.push(
     await appWindow.listen(trayEventNames.openSettings, () => {

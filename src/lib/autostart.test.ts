@@ -60,6 +60,18 @@ describe("autostart", () => {
     expect(adapter.enable).not.toHaveBeenCalled();
   });
 
+  it("shows autostart as off when macOS denies permission after registration", async () => {
+    const adapter = { ...createAdapter(false), verifyOnWrite: true };
+
+    await expect(
+      setAutostartEnabled(adapter, true, false, "检查登录项"),
+    ).resolves.toEqual({
+      enabled: false,
+      error: "检查登录项",
+    });
+    expect(adapter.isEnabled).toHaveBeenCalledOnce();
+  });
+
   it("keeps the previous state and returns a short error when setting fails", async () => {
     const adapter = createAdapter(false);
     vi.mocked(adapter.enable).mockRejectedValue(new Error("blocked"));

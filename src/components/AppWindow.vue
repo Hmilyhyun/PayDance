@@ -31,6 +31,7 @@ withDefaults(
     dailyEarnText: string;
     earnedText: string;
     firstConfigIssue: string;
+    followsSystemTheme?: boolean;
     hasConfigIssues: boolean;
     hasIssue: (field: SalaryConfigIssue["field"]) => boolean;
     isAutostartUpdating: boolean;
@@ -74,6 +75,7 @@ const emit = defineEmits<{
   "update:autostartEnabled": [value: boolean];
   "update:config": [config: SalaryConfig];
   "update:currencySymbol": [symbol: string];
+  "update:followsSystemTheme": [enabled: boolean];
   "update:showSalaryInfo": [value: boolean];
   "update:showSettings": [value: boolean];
   "update:themeMode": [mode: ThemeMode];
@@ -149,6 +151,7 @@ const emit = defineEmits<{
               :config="config"
               :currency-symbol="currencySymbol"
               :first-issue="firstConfigIssue"
+              :follows-system-theme="followsSystemTheme"
               :has-issue="hasIssue"
               :is-autostart-updating="isAutostartUpdating"
               :mini-always-on-top="alwaysOnTop"
@@ -162,6 +165,7 @@ const emit = defineEmits<{
               @update:autostart-enabled="emit('update:autostartEnabled', $event)"
               @update:config="emit('update:config', $event)"
               @update:currency-symbol="emit('update:currencySymbol', $event)"
+              @update:follows-system-theme="emit('update:followsSystemTheme', $event)"
             />
           </div>
         </section>

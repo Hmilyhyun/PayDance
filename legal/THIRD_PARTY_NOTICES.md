@@ -54,6 +54,8 @@
 |-------|--------|
 | `objc2` | MIT |
 | `objc2-app-kit` | Zlib OR Apache-2.0 OR MIT |
+| `objc2-foundation` | MIT |
+| `objc2-service-management` | Zlib OR Apache-2.0 OR MIT |
 | `serde` | Apache-2.0 OR MIT |
 | `serde_json` | Apache-2.0 OR MIT |
 | `tauri` | Apache-2.0 OR MIT |

@@ -78,16 +78,16 @@ describe("app chrome", () => {
   });
 
   it("flushes pending state and exits from the frontend when tray quit is requested", () => {
-    const exitListener = desktopAppSource.slice(
-      desktopAppSource.indexOf('appWindow.listen("before-app-exit"'),
-      desktopAppSource.indexOf(
+    const exitListener = windowLifecycleSource.slice(
+      windowLifecycleSource.indexOf('appWindow.listen("before-app-exit"'),
+      windowLifecycleSource.indexOf(
         "await appWindow.onMoved",
-        desktopAppSource.indexOf('appWindow.listen("before-app-exit"'),
+        windowLifecycleSource.indexOf('appWindow.listen("before-app-exit"'),
       ),
     );
 
     expect(exitListener).toContain('await import("@tauri-apps/plugin-process")');
-    expect(exitListener).toContain("await saveStateNow()");
+    expect(exitListener).toContain("await actions.saveStateNow()");
     expect(exitListener).toContain("await exit(0)");
   });
 
@@ -99,15 +99,17 @@ describe("app chrome", () => {
     expect(windowPositionRecoverySource).toContain("fallbackMainPosition");
     expect(windowPositionRecoverySource).toContain("PhysicalPosition");
     expect(windowPositionRecoverySource).toContain("miniPosition");
-    expect(desktopAppSource).toContain("recordWindowPosition(position)");
+    expect(desktopAppSource).toContain(
+      "recordWindowPosition: windowPosition.recordWindowPosition",
+    );
   });
 
   // Windows reports (-32000, -32000) for a minimized window. Persisting that stranded the
   // window offscreen, and every recovery path went through a show() that cannot unminimize.
   it("never persists a minimized window position and can always recover the window", () => {
     // The move listener must drop the sentinel instead of scheduling a save for it.
-    expect(desktopAppSource).toContain(
-      "if (!windowPosition.recordWindowPosition(position)) return;",
+    expect(windowLifecycleSource).toContain(
+      "if (actions.recordWindowPosition(position)) actions.scheduleSaveState();",
     );
     expect(windowPositionRecoverySource).toContain("sanitizeWindowPosition");
     expect(windowPositionRecoverySource).toContain("isWindowMinimized");

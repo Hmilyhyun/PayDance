@@ -55,6 +55,7 @@ const fallbackValidateT: ValidateT = (key) => key;
 export function useSalaryTicker(
   config: Ref<SalaryConfig>,
   t: ValidateT = fallbackValidateT,
+  useSystemWallTime = false,
 ) {
   const snapshot = ref<SalarySnapshot>(
     calculateSalarySnapshot(new Date(), config.value, t),
@@ -66,17 +67,16 @@ export function useSalaryTicker(
   const startTicker = () => {
     if (isRunning) return;
 
-    const clock = createMonotonicWallClock();
+    // WebKit's monotonic clock can stop while macOS is asleep.
+    const readTime = useSystemWallTime
+      ? () => new Date()
+      : createMonotonicWallClock().now;
     isRunning = true;
 
     const tick = () => {
       if (!isRunning) return;
 
-      const now = clock.now({
-        monotonicMs: performance.now(),
-        wallTimeMs: Date.now(),
-      });
-      snapshot.value = calculateSalarySnapshot(now, config.value, t);
+      snapshot.value = calculateSalarySnapshot(readTime(), config.value, t);
       timerId = window.setTimeout(tick, resolveNextTickDelay(snapshot.value));
     };
 

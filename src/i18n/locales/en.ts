@@ -55,6 +55,7 @@ const en: Messages = {
   "settings.startup": "Startup",
   "settings.autostart": "Launch at startup",
   "settings.miniAlwaysOnTop": "Keep mini window on top",
+  "settings.followSystemTheme": "Follow system appearance",
   "settings.language": "Language",
   "settings.onboarding": "First-time setup",
   "settings.openOnboarding": "Open first-time setup",
@@ -180,6 +181,8 @@ const en: Messages = {
 
   // ── Autostart ──────────────────────────────────────────────────────────
   "autostart.error": "Failed to update autostart setting",
+  "autostart.macosError":
+    "Could not change autostart. Check Login Items & Extensions in System Settings.",
 
   // ── Updater ────────────────────────────────────────────────────────────
   "updater.newVersion": "New version available",

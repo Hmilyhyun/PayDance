@@ -50,19 +50,20 @@ const fallbackT: TFunc = (key) => key;
 export function useSalarySettings(
   storeLoader = () => createSettingsStore(settingsStoreFileName),
   getT: () => TFunc = () => fallbackT,
-  options: { retryDelayMs?: number; macosMiniWindow?: boolean } = {},
+  options: { retryDelayMs?: number; isMacDesktop?: boolean } = {},
 ) {
   const config = ref<SalaryConfig>({ ...defaultSalaryConfig });
   const currencySymbol = ref(defaultCurrencySymbol);
   const alwaysOnTop = ref(true);
   const themeMode = ref<ThemeMode>("light");
+  const followsSystemTheme = ref(false);
   const amountMode = ref<AmountMode>("rolling");
   const locale = ref<Locale>("zh-CN");
   const hasCompletedOnboarding = ref(false);
   const isSettingsReady = ref(false);
   const settingsSaveError = ref("");
   const retryDelayMs = options.retryDelayMs ?? 250;
-  const alwaysOnTopKey = options.macosMiniWindow
+  const alwaysOnTopKey = options.isMacDesktop
     ? settingsStoreKeys.miniAlwaysOnTop
     : settingsStoreKeys.alwaysOnTop;
   let storePromise: Promise<SettingsStoreAdapter> | null = null;
@@ -85,6 +86,7 @@ export function useSalarySettings(
     currencySymbol.value = defaultCurrencySymbol;
     alwaysOnTop.value = true;
     themeMode.value = "light";
+    followsSystemTheme.value = false;
     amountMode.value = "rolling";
     locale.value = detectLocale(undefined);
     hasCompletedOnboarding.value = false;
@@ -144,6 +146,9 @@ export function useSalarySettings(
       await store.set(settingsStoreKeys.currencySymbol, currencySymbol.value);
       await store.set(alwaysOnTopKey, alwaysOnTop.value);
       await store.set(settingsStoreKeys.themeMode, themeMode.value);
+      if (options.isMacDesktop) {
+        await store.set(settingsStoreKeys.followsSystemTheme, followsSystemTheme.value);
+      }
       await store.set(settingsStoreKeys.amountMode, amountMode.value);
       await store.set(settingsStoreKeys.locale, locale.value);
       await store.set(settingsStoreKeys.isMiniMode, windowPreferences.isMiniMode);
@@ -230,6 +235,10 @@ export function useSalarySettings(
 
     if (savedTheme === "dark" || savedTheme === "light") {
       themeMode.value = savedTheme;
+    }
+    if (options.isMacDesktop) {
+      followsSystemTheme.value =
+        (await store.get(settingsStoreKeys.followsSystemTheme)) === true;
     }
 
     if (savedAmountMode === "plain" || savedAmountMode === "rolling") {
@@ -326,6 +335,9 @@ export function useSalarySettings(
       await store.set(settingsStoreKeys.fullSize, fullSize);
       await store.set(settingsStoreKeys.isMiniMode, isMiniMode);
       await store.set(settingsStoreKeys.themeMode, themeMode.value);
+      if (options.isMacDesktop) {
+        await store.set(settingsStoreKeys.followsSystemTheme, followsSystemTheme.value);
+      }
       await store.set(settingsStoreKeys.amountMode, amountMode.value);
       await store.set(settingsStoreKeys.locale, locale.value);
       await store.set(settingsStoreKeys.miniSize, miniSize);
@@ -371,5 +383,6 @@ export function useSalarySettings(
     saveSettings,
     settingsSaveError,
     themeMode,
+    followsSystemTheme,
   };
 }

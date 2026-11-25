@@ -101,7 +101,7 @@ describe("main dashboard shell", () => {
     expect(themeSyncSource).toContain("if (token !== themeApplyToken) return");
     expect(themeSyncSource).toContain("if (isThemeSwitching.value) return");
     expect(themeSyncSource.indexOf("themeMode.value = mode")).toBeLessThan(
-      themeSyncSource.indexOf("await appWindow.setTheme(mode)"),
+      themeSyncSource.indexOf("await appWindow.setTheme("),
     );
     expect(desktopAppSource).toContain("useThemeSync(");
     expect(desktopAppSource).toContain("saveStateNow,");

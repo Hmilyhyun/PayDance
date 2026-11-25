@@ -4,11 +4,13 @@
 // Additional terms: see /legal/ADDITIONAL_TERMS.md
 
 import { disable, enable, isEnabled } from "@tauri-apps/plugin-autostart";
+import { invoke } from "@tauri-apps/api/core";
 
 export type AutostartAdapter = {
   disable: () => Promise<void>;
   enable: () => Promise<void>;
   isEnabled: () => Promise<boolean>;
+  verifyOnWrite?: boolean;
 };
 
 export type AutostartResult = {
@@ -20,6 +22,13 @@ export const tauriAutostartAdapter: AutostartAdapter = {
   disable,
   enable,
   isEnabled,
+};
+
+export const macosAutostartAdapter: AutostartAdapter = {
+  disable,
+  enable,
+  isEnabled: () => invoke<boolean>("macos_autostart_enabled"),
+  verifyOnWrite: true,
 };
 
 export async function readAutostartEnabled(
@@ -52,9 +61,10 @@ export async function setAutostartEnabled(
       await adapter.disable();
     }
 
+    const effectiveEnabled = adapter.verifyOnWrite ? await adapter.isEnabled() : enabled;
     return {
-      enabled,
-      error: "",
+      enabled: effectiveEnabled,
+      error: effectiveEnabled === enabled ? "" : errorMessage,
     };
   } catch (error) {
     console.error("Failed to update autostart state", error);

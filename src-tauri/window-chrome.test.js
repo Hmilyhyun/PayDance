@@ -82,6 +82,10 @@ describe("desktop window chrome", () => {
     ]);
   });
 
+  it("permits the macOS main window to finish quitting after saving settings", () => {
+    expect(macosWindowCapability.permissions).toContain("process:allow-exit");
+  });
+
   it("uses left tray click to show the main window and right click for the menu", () => {
     expect(trayRs).toContain(".show_menu_on_left_click(false)");
     expect(trayRs).toContain("TrayIconEvent::Click");

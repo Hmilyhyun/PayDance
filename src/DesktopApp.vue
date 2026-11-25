@@ -18,8 +18,12 @@ import { appName, isMacDesktop } from "./lib/app-meta";
 import { localeChangedEventName } from "./lib/app-events";
 import type { ResizeDirection } from "./lib/resize-handles";
 import { useAppShell } from "./composables/useAppShell";
-import { useAppWindowLifecycle } from "./composables/useAppWindowLifecycle";
+import {
+  registerReadyWindowActions,
+  useAppWindowLifecycle,
+} from "./composables/useAppWindowLifecycle";
 import { useAutostart } from "./composables/useAutostart";
+import { macosAutostartAdapter } from "./lib/autostart";
 import { provideCurrency } from "./composables/useCurrency";
 import { useDashboardModel } from "./composables/useDashboardModel";
 import { provideI18n } from "./composables/useI18n";
@@ -28,7 +32,6 @@ import { useMiniOpacityPanel } from "./composables/useMiniOpacityPanel";
 import { useSalarySettings } from "./composables/useSalarySettings";
 import { useSalaryTicker } from "./composables/useSalaryTicker";
 import { useThemeSync } from "./composables/useThemeSync";
-import { registerTrayActions } from "./composables/useTrayActions";
 import { useWindowMode } from "./composables/useWindowMode";
 import { useWindowPositionRecovery } from "./composables/useWindowPositionRecovery";
 import { useWindowStatePersistence } from "./composables/useWindowStatePersistence";
@@ -44,6 +47,7 @@ const {
   alwaysOnTop,
   config,
   currencySymbol,
+  followsSystemTheme,
   hasCompletedOnboarding,
   isSettingsReady,
   loadSettings,
@@ -51,20 +55,16 @@ const {
   saveSettings,
   settingsSaveError,
   themeMode,
-} = useSalarySettings(undefined, () => t.value, { macosMiniWindow: isMacDesktop });
+} = useSalarySettings(undefined, () => t.value, { isMacDesktop });
 
 const { t } = provideI18n(locale);
+provideCurrency(currencySymbol);
 
-// Watch the ref rather than hooking setLocale: restoring the saved language at startup — and
-// auto-detecting it from the system on a first run — assigns this ref directly and never goes
-// through setLocale, so hooking the setter left the Rust tray stuck on Chinese after every
-// relaunch. The companion window stays silent; its locale is pushed to it, not chosen there.
+// Watch startup locale changes too. Only the main window owns the menu bar language.
 watch(locale, (next) => {
   if (isOpacityPanelWindow) return;
   void appWindow.emit(localeChangedEventName, next);
 });
-
-provideCurrency(currencySymbol);
 
 const isMiniMode = ref(false);
 const {
@@ -73,14 +73,21 @@ const {
   isAutostartUpdating,
   refreshAutostart,
   updateAutostartEnabled,
-} = useAutostart(() => t.value("autostart.error"));
+} = useAutostart(
+  () => t.value(isMacDesktop ? "autostart.macosError" : "autostart.error"),
+  isMacDesktop ? macosAutostartAdapter : undefined,
+);
 const fullSize = ref<WindowSize>({ ...fullWindowSize });
 const miniSize = ref<WindowSize>({ ...miniDefaultSize });
 const miniOpacityPercent = ref(defaultMiniOpacityPercent);
 const mainPosition = ref<WindowPosition | undefined>(undefined);
 const miniPosition = ref<WindowPosition | undefined>(undefined);
 const defaultWindowPreferences = resolveWindowPreferences({});
-const { snapshot, startTicker, stopTicker } = useSalaryTicker(config, t.value);
+const { snapshot, startTicker, stopTicker } = useSalaryTicker(
+  config,
+  t.value,
+  isMacDesktop,
+);
 const { applyWindowMode, reapplyTaskbarVisibility, setAlwaysOnTop } = useWindowMode(
   appWindow,
   isMiniMode,
@@ -110,10 +117,18 @@ const { clearSaveStateTimer, loadWindowPreferences, saveStateNow, scheduleSaveSt
     miniSize,
     saveSettings,
   });
-const { applyThemeMode, isThemeSwitching, setThemeMode, toggleTheme } = useThemeSync(
+const {
+  applyThemeMode,
+  isThemeSwitching,
+  resolvedThemeMode,
+  setFollowsSystemTheme,
+  setThemeMode,
+  toggleTheme,
+} = useThemeSync(
   appWindow,
   themeMode,
   saveStateNow,
+  isMacDesktop && !isOpacityPanelWindow ? followsSystemTheme : undefined,
 );
 const {
   activeView,
@@ -144,8 +159,9 @@ const {
 const { showMiniOpacityPanel } = useMiniOpacityPanel(
   appWindow,
   miniOpacityPercent,
-  themeMode,
+  resolvedThemeMode,
   locale,
+  isMacDesktop && !isOpacityPanelWindow,
 );
 const { clearMiniDrag, startMiniDrag } = useMiniWindowDrag(appWindow);
 const {
@@ -161,7 +177,7 @@ const {
 } = useDashboardModel(config, snapshot, t.value, locale);
 
 const shellClass = computed(() =>
-  themeMode.value === "dark" ? "theme-dark" : "theme-light",
+  resolvedThemeMode.value === "dark" ? "theme-dark" : "theme-light",
 );
 
 const updateMiniOpacityPercent = (value: number, options: { commit?: boolean } = {}) => {
@@ -204,17 +220,14 @@ const { clearWindowLifecycleTimers, registerWindowLifecycle } = useAppWindowLife
 );
 
 watch(config, scheduleSaveState, { deep: true });
-// These three live outside the window state the persistence layer watches, and nothing else
-// saves after they change: without this, picking a currency symbol, an amount animation or a
-// language and then losing the process would silently roll the choice back.
+// These choices can change without triggering a window-state save.
 watch([amountMode, currencySymbol, locale], scheduleSaveState);
 const unlisteners: Array<() => void> = [];
 
 onMounted(async () => {
   if (isOpacityPanelWindow) return;
 
-  // On Windows, register the close interceptor before loading preferences so that Alt+F4
-  // and the taskbar close action hide the window during startup as well.
+  // Intercept Windows close requests even while preferences load.
   unlisteners.push(...(await registerWindowLifecycle()));
 
   const windowPreferences = await loadWindowPreferences();
@@ -226,27 +239,20 @@ onMounted(async () => {
   miniPosition.value = windowPreferences.miniPosition;
   await refreshAutostart();
   await applyThemeMode(themeMode.value, { persist: false });
-  // Never let a window call abort the rest of startup: the listeners, tray actions and ticker
-  // registered below are what keep the app usable and let tray Quit exit the process at all.
+  // Keep the menu bar and ticker available if applying window geometry fails.
   await applyWindowMode().catch(() => undefined);
   await windowPosition.restoreWindowPosition().catch(() => undefined);
 
   unlisteners.push(
-    await appWindow.listen("before-app-exit", async () => {
-      try {
-        await saveStateNow();
-      } finally {
-        const { exit } = await import("@tauri-apps/plugin-process");
-        await exit(0);
-      }
-    }),
-    await appWindow.onMoved(({ payload: position }) => {
-      // A minimize reports the sentinel position; recording it would persist a lost window.
-      if (!windowPosition.recordWindowPosition(position)) return;
-      scheduleSaveState();
-    }),
-    ...(await registerTrayActions(appWindow, {
+    ...(await registerReadyWindowActions(appWindow, {
+      openMain: isMacDesktop
+        ? () => (isMiniMode.value ? setMiniMode(false) : undefined)
+        : undefined,
       openSettings,
+      recordWindowPosition: windowPosition.recordWindowPosition,
+      refreshAutostart,
+      saveStateNow,
+      scheduleSaveState,
       toggleAlwaysOnTop,
       toggleMiniMode,
     })),
@@ -310,6 +316,7 @@ onBeforeUnmount(() => {
       :daily-earn-text="dailyEarnText"
       :earned-text="earnedText"
       :first-config-issue="firstConfigIssue"
+      :follows-system-theme="followsSystemTheme"
       :has-config-issues="hasConfigIssues"
       :has-issue="hasIssue"
       :is-autostart-updating="isAutostartUpdating"
@@ -322,7 +329,7 @@ onBeforeUnmount(() => {
       :use-native-window-controls="isMacDesktop"
       :snapshot="snapshot"
       :status-text="statusText"
-      :theme-mode="themeMode"
+      :theme-mode="resolvedThemeMode"
       :worked-time-text="workedTimeText"
       @close="appWindow.hide()"
       @complete-onboarding="completeOnboarding"
@@ -335,6 +342,7 @@ onBeforeUnmount(() => {
       @toggle-settings="showSettings = !showSettings"
       @toggle-theme="toggleTheme"
       @update:autostart-enabled="updateAutostartEnabled"
+      @update:follows-system-theme="setFollowsSystemTheme"
       @update:theme-mode="setThemeMode"
     />
   </main>

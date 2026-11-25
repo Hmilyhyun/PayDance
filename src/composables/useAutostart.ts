@@ -23,9 +23,13 @@ export function useAutostart(
   const autostartEnabled = ref(false);
   const autostartError = ref("");
   const isAutostartUpdating = ref(false);
+  let refreshVersion = 0;
 
   const refreshAutostart = async () => {
+    if (isAutostartUpdating.value) return;
+    const version = ++refreshVersion;
     const result = await readAutostartEnabled(adapter);
+    if (version !== refreshVersion) return;
     autostartEnabled.value = result.enabled;
     autostartError.value = result.error;
   };
@@ -34,6 +38,7 @@ export function useAutostart(
     if (isAutostartUpdating.value) return;
 
     isAutostartUpdating.value = true;
+    refreshVersion += 1;
     try {
       const result = await setAutostartEnabled(
         adapter,

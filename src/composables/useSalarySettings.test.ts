@@ -34,7 +34,7 @@ describe("useSalarySettings", () => {
     );
     const { useSalarySettings } = await import("./useSalarySettings");
     const macSettings = useSalarySettings(createMockStore, undefined, {
-      macosMiniWindow: true,
+      isMacDesktop: true,
     });
 
     const windowPreferences = await macSettings.loadSettings();

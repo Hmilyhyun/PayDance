@@ -16,6 +16,7 @@ import type { Messages } from "../i18n/types";
 import { isMacDesktop } from "../lib/app-meta";
 import CurrencySymbolField from "./settings/CurrencySymbolField.vue";
 import LunchBreakFields from "./settings/LunchBreakFields.vue";
+import MacWindowSettings from "./settings/MacWindowSettings.vue";
 import SalaryAmountFields from "./settings/SalaryAmountFields.vue";
 import SalaryModeControl from "./settings/SalaryModeControl.vue";
 import SettingsAboutFooter from "./settings/SettingsAboutFooter.vue";
@@ -36,6 +37,7 @@ const props = withDefaults(
     config: SalaryConfig;
     currencySymbol: string;
     firstIssue: string;
+    followsSystemTheme?: boolean;
     hasIssue: (field: SalaryConfigIssue["field"]) => boolean;
     isAutostartUpdating: boolean;
     miniAlwaysOnTop?: boolean;
@@ -58,6 +60,7 @@ const emit = defineEmits<{
   "update:amountMode": [mode: "rolling" | "plain"];
   "update:config": [config: SalaryConfig];
   "update:currencySymbol": [symbol: string];
+  "update:followsSystemTheme": [enabled: boolean];
 }>();
 
 const amountModeOptions = computed(
@@ -200,16 +203,13 @@ const updateConfig = <Key extends keyof SalaryConfig>(
       </template>
     </SettingsGroup>
 
-    <SettingsGroup v-if="isMacDesktop" :title="t('settings.miniAlwaysOnTop')">
-      <template #action>
-        <SwitchRow
-          :label="t('settings.miniAlwaysOnTop')"
-          title-action
-          :model-value="miniAlwaysOnTop ?? true"
-          @update:model-value="emit('toggleMiniAlwaysOnTop')"
-        />
-      </template>
-    </SettingsGroup>
+    <MacWindowSettings
+      v-if="isMacDesktop"
+      :mini-always-on-top="miniAlwaysOnTop ?? true"
+      :follows-system-theme="followsSystemTheme ?? false"
+      @toggle-mini-always-on-top="emit('toggleMiniAlwaysOnTop')"
+      @update:follows-system-theme="emit('update:followsSystemTheme', $event)"
+    />
 
     <SettingsAboutFooter :update-status="updateStatus" />
   </section>

@@ -10,7 +10,7 @@ import { ref } from "vue";
 import { defaultSalaryConfig, emptySnapshot, type SalarySnapshot } from "../lib/salary";
 
 const calculateSalarySnapshotMock = vi.hoisted(() =>
-  vi.fn((): SalarySnapshot => ({
+  vi.fn<(now: Date) => SalarySnapshot>(() => ({
     ...emptySnapshot,
     dailySalary: 360,
     earnedToday: 120,
@@ -63,5 +63,25 @@ describe("useSalaryTicker", () => {
     expect(
       calculateSalarySnapshotMock.mock.calls.length - initialCallCount,
     ).toBeLessThanOrEqual(10);
+  });
+
+  it("uses the corrected wall time after a short macOS sleep", async () => {
+    const { useSalaryTicker } = await import("./useSalaryTicker");
+    const before = new Date("2026-11-24T10:00:00Z");
+    vi.setSystemTime(before);
+    const { startTicker, stopTicker } = useSalaryTicker(
+      ref(defaultSalaryConfig),
+      undefined,
+      true,
+    );
+    startTicker();
+
+    vi.setSystemTime(new Date(before.getTime() + 120_000));
+    await vi.advanceTimersByTimeAsync(120);
+    stopTicker();
+
+    expect(calculateSalarySnapshotMock.mock.lastCall?.[0].getTime()).toBe(
+      before.getTime() + 120_120,
+    );
   });
 });

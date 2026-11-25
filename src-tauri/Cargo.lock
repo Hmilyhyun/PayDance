@@ -2525,6 +2525,8 @@ version = "0.9.10"
 dependencies = [
  "objc2",
  "objc2-app-kit",
+ "objc2-foundation",
+ "objc2-service-management",
  "serde",
  "serde_json",
  "tauri",

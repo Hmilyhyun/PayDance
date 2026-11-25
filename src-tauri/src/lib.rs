@@ -6,6 +6,8 @@
 use tauri::Manager;
 
 #[cfg(target_os = "macos")]
+mod macos_autostart;
+#[cfg(target_os = "macos")]
 mod macos_window;
 mod portable_update;
 mod settings_backup;
@@ -49,6 +51,8 @@ pub fn run() {
         .invoke_handler(tauri::generate_handler![
             install_portable_update,
             backup_unreadable_settings,
+            #[cfg(target_os = "macos")]
+            macos_autostart::macos_autostart_enabled,
             #[cfg(target_os = "macos")]
             macos_window::set_macos_mini_window,
         ])

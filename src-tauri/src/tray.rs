@@ -11,6 +11,8 @@ use tauri::{
 };
 
 const TRAY_OPEN_SETTINGS_EVENT: &str = "tray-open-settings";
+#[cfg(target_os = "macos")]
+const TRAY_OPEN_MAIN_EVENT: &str = "tray-open-main";
 const TRAY_TOGGLE_ALWAYS_ON_TOP_EVENT: &str = "tray-toggle-always-on-top";
 const TRAY_TOGGLE_MINI_MODE_EVENT: &str = "tray-toggle-mini-mode";
 const WINDOW_SHOWN_EVENT: &str = "window-shown";
@@ -129,7 +131,11 @@ pub(crate) fn show_window(window: &WebviewWindow) {
 
 fn dispatch_tray_action(window: &WebviewWindow, action: TrayAction) {
     match action {
-        TrayAction::Show => show_window(window),
+        TrayAction::Show => {
+            show_window(window);
+            #[cfg(target_os = "macos")]
+            let _ = window.emit(TRAY_OPEN_MAIN_EVENT, ());
+        }
         TrayAction::OpenSettings => {
             show_window(window);
             let _ = window.emit(TRAY_OPEN_SETTINGS_EVENT, ());

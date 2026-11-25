@@ -6,7 +6,7 @@
 import { LogicalSize, PhysicalPosition } from "@tauri-apps/api/dpi";
 import { currentMonitor } from "@tauri-apps/api/window";
 import { WebviewWindow } from "@tauri-apps/api/webviewWindow";
-import type { Ref } from "vue";
+import { watch, type Ref } from "vue";
 import {
   miniOpacityPanelLogicalSize,
   resolveMiniOpacityPanelAnchorRect,
@@ -53,7 +53,14 @@ export function useMiniOpacityPanel(
   miniOpacityPercent: Ref<number>,
   themeMode: Ref<ThemeMode>,
   locale: Ref<Locale>,
+  syncTheme = false,
 ) {
+  if (syncTheme) {
+    watch(themeMode, async (mode) => {
+      const panel = await WebviewWindow.getByLabel("mini-opacity");
+      await panel?.emit("mini-opacity-theme-change", mode);
+    });
+  }
   const resolveMiniOpacityPanelPlacement = async (opacityWindow: WebviewWindow) => {
     await opacityWindow.setSize(
       new LogicalSize(

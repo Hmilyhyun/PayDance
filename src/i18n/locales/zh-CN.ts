@@ -54,6 +54,7 @@ const zhCN: Messages = {
   "settings.startup": "启动",
   "settings.autostart": "开机自动启动",
   "settings.miniAlwaysOnTop": "迷你窗置顶",
+  "settings.followSystemTheme": "跟随系统外观",
   "settings.language": "语言",
   "settings.onboarding": "首次启动向导",
   "settings.openOnboarding": "打开首次启动向导",
@@ -177,6 +178,7 @@ const zhCN: Messages = {
 
   // ── Autostart ──────────────────────────────────────────────────────────
   "autostart.error": "自启动设置失败",
+  "autostart.macosError": "自启动设置失败，请检查系统设置中的「登录项与扩展」",
 
   // ── Updater ────────────────────────────────────────────────────────────
   "updater.newVersion": "发现新版本",
